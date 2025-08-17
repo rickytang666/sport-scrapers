@@ -31,5 +31,3 @@ def scrape_ittf(num=10):
             print()
     except requests.exceptions.RequestException as e:
         print(f"An error occurred: {e}")
-
-scrape_ittf(20)
