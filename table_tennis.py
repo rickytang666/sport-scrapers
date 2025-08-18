@@ -2,22 +2,32 @@ import requests
 from bs4 import BeautifulSoup
 import datetime
 
-def scrape_ittf(num=10):
+def scrape_ittf(date_query=None, num=10):
     try:
         num = max(1, num) # Ensure num is at least 1
         
-        today = datetime.date.today()
+        # Use today's date if no date is provided
+        if date_query is None:
+            date_query = datetime.date.today()
 
         # find the nearest tuesday
-        while today.weekday() != 1:
-            today -= datetime.timedelta(days=1)
+        while date_query.weekday() != 1:
+            date_query -= datetime.timedelta(days=1)
+
+        # only support years >= 2021
+
+        if date_query.year < 2021:
+            print("Year must be 2021 or later :(")
+            return
 
         # dynamically get the week number and month number (2 digits with leading zero)
-        week_num = today.isocalendar()[1]
-        month_num = f"{today.month:02d}"
+        year = date_query.year
+        week_num = date_query.isocalendar()[1]
+        month_num = f"{date_query.month:02d}"
         
-        url = f"https://www.ittf.com/wp-content/uploads/2025/{month_num}/2025_{week_num}_SEN_MS.html"
+        url = f"https://www.ittf.com/wp-content/uploads/{year}/{month_num}/{year}_{week_num}_SEN_MS.html"
         print(url)
+        print()
         response = requests.get(url)
         if (response.status_code != 200):
             print(f"Failed to retrieve data. Status code: {response.status_code}")
@@ -30,16 +40,20 @@ def scrape_ittf(num=10):
         rows = table.find_all('tr', class_='rrow', limit=num)
 
         # print the header
-        print(f"Men's Singles Ranking in Week {week_num} of 2025:")
+        print(f"Men's Singles Ranking in Week {week_num} of {year}:")
         print("----------------------------------------------")
 
         # iterate through each row and print the data
         for row in rows:
-            # go through <td> one by one
             cols = row.find_all('td')
-            # print the text in each <td>
-            for col in cols:
-                print(col.text.strip(), end=' | ')
+            # Remove <p> with rankup or rankdown class from the rank cell
+            for tag in cols[0].find_all('p', class_=['rankup', 'rankdown']):
+                tag.decompose()
+            rank = cols[0].text.strip()
+            name = cols[1].text.strip()
+            nationality = cols[2].text.strip()
+            points = cols[3].text.strip()
+            print(f"{rank} {name} {nationality} {points}")
             print()
     
     except requests.exceptions.RequestException as e:
