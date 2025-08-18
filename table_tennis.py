@@ -2,6 +2,10 @@ import requests
 from bs4 import BeautifulSoup
 import datetime
 
+'''
+Currently only supports men's singles ranking.
+'''
+
 def scrape_ittf(date_query=None, num=10):
     try:
         num = max(1, num) # Ensure num is at least 1
@@ -56,5 +60,5 @@ def scrape_ittf(date_query=None, num=10):
             print(f"{rank} {name} {nationality} {points}")
             print()
     
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         print(f"An error occurred: {e}")
